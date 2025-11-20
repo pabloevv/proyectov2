@@ -62,9 +62,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  const resolveRedirectTo = () => {
+    const envSite =
+      import.meta.env.VITE_SITE_URL ||
+      import.meta.env.PUBLIC_SITE_URL ||
+      import.meta.env.SUPABASE_SITE_URL ||
+      ''
+    const normalizedEnv = envSite ? envSite.replace(/\/+$/, '') : ''
+
+    if (normalizedEnv) return normalizedEnv
+    if (typeof window !== 'undefined') return window.location.origin
+    return 'http://localhost:5173'
+  }
+
   const loginWithGoogle = () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: `${resolveRedirectTo()}/`,
+      },
     })
 
   const logout = () => supabase.auth.signOut()
