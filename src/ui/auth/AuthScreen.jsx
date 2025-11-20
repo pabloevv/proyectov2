@@ -326,7 +326,14 @@ const AuthScreen = () => {
   const fileInputRef = useRef(null)
   const triggerFilePicker = () => fileInputRef.current?.click()
 
-  const isAdmin = profile?.username?.toLowerCase() === '@admin1912'
+  const handle = profile?.username?.replace(/^@+/, '').toLowerCase()
+  const adminHandles = ['admin1912']
+  const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
+  const adminId = import.meta.env.VITE_ADMIN_ID || ''
+  const isAdmin =
+    adminHandles.includes(handle) ||
+    ((profile?.email || profile?.user_email || '').toLowerCase() === adminEmail && adminEmail) ||
+    (profile?.id && adminId && profile.id === adminId)
   const isProfileComplete = Boolean(profile?.username && profile?.full_name)
   const placeholderInitial = (
     profile?.full_name ||

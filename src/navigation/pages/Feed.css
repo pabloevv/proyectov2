@@ -459,6 +459,11 @@
   font-size: 0.9rem;
 }
 
+.admin-actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .muted {
   color: #94a3b8;
 }

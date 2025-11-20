@@ -59,6 +59,29 @@ const enrichReviewAvatars = async (review) => {
   }
 }
 
+const deleteReviewCascade = async (review) => {
+  // Elimina imágenes de storage (bucket resennas)
+  if (review.review_images?.length) {
+    const files = review.review_images
+      .map((img) => {
+        const path = extractStoragePath(img.image_url)
+        if (!path) return null
+        const [bucket, ...rest] = path.split('/')
+        return { bucket, objectPath: rest.join('/') }
+      })
+      .filter(Boolean)
+    for (const file of files) {
+      await supabase.storage.from(file.bucket).remove([file.objectPath])
+    }
+  }
+
+  await supabase.from('review_hashtags').delete().eq('review_id', review.id)
+  await supabase.from('review_comments').delete().eq('review_id', review.id)
+  await supabase.from('votes').delete().eq('review_id', review.id)
+  await supabase.from('review_images').delete().eq('review_id', review.id)
+  await supabase.from('reviews').delete().eq('id', review.id)
+}
+
 function Stars({ value }) {
   return (
     <div className="card-stars" aria-label={`${value} estrellas`}>
@@ -88,6 +111,8 @@ function ReviewCard({
   totalLikes,
   isFollowing,
   onFollowToggle,
+  isAdmin,
+  onAdminDelete,
 }) {
   const [photoUrl, setPhotoUrl] = useState(fallbackImage)
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -188,11 +213,11 @@ function ReviewCard({
               <span>{dislikeCount}</span>
             </button>
             <div className="comment-block">
-              <button
-                type="button"
-                className="pill comment"
-                onClick={() => {
-                  onToggleComments(review.id)
+            <button
+              type="button"
+              className="pill comment"
+              onClick={() => {
+                onToggleComments(review.id)
                   onLoadComments(review.id)
                 }}
                 disabled={commentsLoading}
@@ -223,6 +248,17 @@ function ReviewCard({
                 disabled={!canInteract}
               />
             </div>
+            {isAdmin && (
+              <div className="admin-actions-row">
+                <button
+                  type="button"
+                  className="danger-outline small"
+                  onClick={() => onAdminDelete(review)}
+                >
+                  Borrar reseña (admin)
+                </button>
+              </div>
+            )}
           </div>
           {commentsOpen && (
             <div className="comments-panel">
@@ -317,6 +353,15 @@ function HomePage() {
 
   const userId = user?.id
   const currentUsername = profile?.username || ''
+  const adminHandles = ['admin1912']
+  const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
+  const adminId = import.meta.env.VITE_ADMIN_ID || ''
+  const isAdmin = useMemo(() => {
+    const handle = currentUsername.replace(/^@+/, '').toLowerCase()
+    const emailMatch = (user?.email || '').toLowerCase() === adminEmail && adminEmail
+    const idMatch = userId && adminId && userId === adminId
+    return adminHandles.includes(handle) || Boolean(emailMatch) || Boolean(idMatch)
+  }, [currentUsername, user?.email, adminEmail, userId, adminId])
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -512,6 +557,18 @@ function HomePage() {
       setCommentDrafts((prev) => ({ ...prev, [reviewId]: '' }))
     } catch (err) {
       setError(err?.message ?? 'No se pudo publicar el comentario.')
+    }
+  }
+
+  const handleAdminDelete = async (review) => {
+    if (!isAdmin) return
+    const confirmDelete = window.confirm('¿Borrar esta reseña y todos sus datos relacionados?')
+    if (!confirmDelete) return
+    try {
+      await deleteReviewCascade(review)
+      setReviews((prev) => prev.filter((r) => r.id !== review.id))
+    } catch (err) {
+      setError(err?.message ?? 'No se pudo borrar la reseña.')
     }
   }
 
@@ -746,6 +803,8 @@ function HomePage() {
             totalLikes={likeTotals[rev.profiles?.id] || 0}
             isFollowing={followedIds.has(rev.profiles?.id)}
             onFollowToggle={handleFollowToggle}
+            isAdmin={isAdmin}
+            onAdminDelete={handleAdminDelete}
           />
         ))}
       </div>
