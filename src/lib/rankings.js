@@ -4,9 +4,9 @@ import proFrame from '../assets/images/rangos/pro.svg'
 import legendFrame from '../assets/images/rangos/legend.svg'
 
 const rankLevels = [
-  { key: 'legend', label: 'Leyenda', minLikes: 150, frame: legendFrame },
-  { key: 'pro', label: 'Pro', minLikes: 50, frame: proFrame },
-  { key: 'explorer', label: 'Explorador', minLikes: 10, frame: explorerFrame },
+  { key: 'legend', label: 'Leyenda', minLikes: 4, frame: legendFrame },
+  { key: 'pro', label: 'Pro', minLikes: 3, frame: proFrame },
+  { key: 'explorer', label: 'Explorador', minLikes: 2, frame: explorerFrame },
   { key: 'rookie', label: 'Rookie', minLikes: 0, frame: rookieFrame },
 ]
 
