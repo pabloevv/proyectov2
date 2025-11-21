@@ -123,9 +123,89 @@
   font-size: 0.9rem;
 }
 
+.profile-preview-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.profile-preview-avatar {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+}
+
+.profile-preview-avatar img,
+.profile-preview-avatar .avatar-fallback {
+  position: absolute;
+  inset: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.profile-preview-avatar img {
+  display: block;
+  width: 100%;
+  height: 98%;
+}
+
+.profile-preview-avatar .avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-weight: 700;
+}
+
+.profile-preview-avatar .rank-frame {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.profile-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-preview-meta .profile-name {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.profile-preview-meta .profile-handle {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.profile-preview-meta .rank-chip {
+  background: rgba(59, 130, 246, 0.15);
+  color: #bfdbfe;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 0.25rem 0.7rem;
+}
+
+.profile-preview-actions {
+  margin-left: auto;
+}
+
 .feed-title {
   margin: 0.5rem 0;
-  color: #0f172a;
+  color: #d0d1d5;
 }
 
 .feed-grid {

@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import likeIcon from '../../assets/images/review-section/like.svg'
 import dislikeIcon from '../../assets/images/review-section/dislike.svg'
 import commentIcon from '../../assets/images/review-section/comment.svg'
-import { formatLikesLabel, getRankByLikes } from '../../lib/rankings'
+import { formatLikesLabel, useRankByLikes } from '../../lib/rankings'
 import settingsIcon from '../../assets/images/profile/settings.svg'
 import './AuthScreen.css'
 import '../../navigation/pages/Feed.css'
@@ -352,7 +352,7 @@ const AuthScreen = () => {
       return acc + likes
     }, 0)
   }, [userReviews])
-  const rankInfo = useMemo(() => getRankByLikes(totalLikes), [totalLikes])
+  const rankInfo = useRankByLikes(totalLikes)
   const rankLikesLabel = formatLikesLabel(totalLikes)
 
   useEffect(() => {

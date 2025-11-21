@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import rookieFrame from '../assets/images/rangos/rookie.svg'
 import explorerFrame from '../assets/images/rangos/explorer.svg'
 import proFrame from '../assets/images/rangos/pro.svg'
@@ -15,9 +16,19 @@ export const getRankByLikes = (likes = 0) => {
   return rankLevels.find((rank) => total >= rank.minLikes) ?? rankLevels[rankLevels.length - 1]
 }
 
+export const useRankByLikes = (likes = 0) => {
+  const [rank, setRank] = useState(() => getRankByLikes(likes))
+
+  useEffect(() => {
+    setRank(getRankByLikes(likes))
+  }, [likes])
+
+  return rank
+}
+
 export const formatLikesLabel = (likes = 0) => {
   if (likes >= 1000) {
-    return `${(likes / 1000).toFixed(1).replace(/\\.0$/, '')}k`
+    return `${(likes / 1000).toFixed(1).replace(/\.0$/, '')}k`
   }
   return `${likes}`
 }

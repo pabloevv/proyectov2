@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import likeIcon from '../../assets/images/review-section/like.svg'
 import dislikeIcon from '../../assets/images/review-section/dislike.svg'
 import commentIcon from '../../assets/images/review-section/comment.svg'
-import { getRankByLikes } from '../../lib/rankings'
+import { formatLikesLabel, useRankByLikes } from '../../lib/rankings'
 import './Feed.css'
 
 const fallbackImage =
@@ -118,7 +118,7 @@ function ReviewCard({
   const [avatarUrl, setAvatarUrl] = useState('')
   const author = useMemo(() => review.profiles || {}, [review.profiles])
   const authorAvatar = author.avatar_url || ''
-  const rankInfo = useMemo(() => getRankByLikes(totalLikes), [totalLikes])
+  const rankInfo = useRankByLikes(totalLikes)
   const authorInitial = useMemo(() => {
     const seed = (author.full_name || author.username || 'U').replace(/^@+/, '')
     return seed.charAt(0).toUpperCase()
@@ -340,6 +340,7 @@ function HomePage() {
   const [userSearchError, setUserSearchError] = useState('')
   const [userSearchPerformed, setUserSearchPerformed] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState(null)
+  const [selectedProfileAvatar, setSelectedProfileAvatar] = useState('')
 
   const userId = user?.id
   const currentUsername = profile?.username || ''
@@ -435,6 +436,41 @@ function HomePage() {
     })
     return totals
   }, [reviews])
+
+  const selectedProfileLikes = useMemo(
+    () => (selectedProfile?.id ? likeTotals[selectedProfile.id] || 0 : 0),
+    [selectedProfile?.id, likeTotals],
+  )
+  const selectedRankInfo = useRankByLikes(selectedProfileLikes)
+  const selectedProfileInitial = useMemo(() => {
+    const seed =
+      (selectedProfile?.full_name || selectedProfile?.username || 'U').replace(/^@+/, '')
+    return seed.charAt(0).toUpperCase()
+  }, [selectedProfile?.full_name, selectedProfile?.username])
+
+  useEffect(() => {
+    let cancelled = false
+    const ensureAvatar = async () => {
+      if (!selectedProfile?.avatar_url) {
+        setSelectedProfileAvatar('')
+        return
+      }
+      try {
+        const signed = await getSignedUrlIfNeeded(selectedProfile.avatar_url)
+        if (!cancelled) {
+          setSelectedProfileAvatar(signed || selectedProfile.avatar_url)
+        }
+      } catch {
+        if (!cancelled) {
+          setSelectedProfileAvatar(selectedProfile.avatar_url)
+        }
+      }
+    }
+    ensureAvatar()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedProfile?.avatar_url])
 
   const updateReviewInState = (id, updater) => {
     setReviews((prev) => prev.map((r) => (r.id === id ? updater(r) : r)))
@@ -676,7 +712,7 @@ function HomePage() {
       <form className="user-search-bar" onSubmit={handleUserSearch}>
         <input
           type="text"
-          placeholder="Buscar reseñas por usuario..."
+          placeholder="Buscar usuarios..."
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
         />
@@ -744,19 +780,31 @@ function HomePage() {
 
       <h2 className="feed-title">Últimas reseñas</h2>
       {selectedProfile && (
-        <div className="selected-user-banner">
-          <div>
-            <p className="muted small">Viendo reseñas de</p>
-            <p className="selected-user-name">
-              {selectedProfile.full_name || selectedProfile.username || 'Usuario'}
-              {selectedProfile.username && (
-                <span className="selected-user-handle">{selectedProfile.username}</span>
-              )}
-            </p>
+        <div className="profile-preview-card">
+          <div className="profile-preview-avatar">
+            {selectedProfileAvatar ? (
+              <img src={selectedProfileAvatar} alt={selectedProfile.username || 'avatar'} />
+            ) : (
+              <span className="avatar-fallback">{selectedProfileInitial}</span>
+            )}
+            {selectedRankInfo?.frame && (
+              <img src={selectedRankInfo.frame} alt="" aria-hidden="true" className="rank-frame" />
+            )}
           </div>
-          <button type="button" className="secondary small" onClick={clearSelectedProfile}>
-            Ver todo
-          </button>
+          <div className="profile-preview-meta">
+            <p className="profile-name">
+              {selectedProfile.full_name || selectedProfile.username || 'Usuario'}
+            </p>
+            <p className="profile-handle">{selectedProfile.username || ''}</p>
+            <span className="rank-chip">
+              {selectedRankInfo?.label || 'Rookie'} · {formatLikesLabel(selectedProfileLikes)} Likes
+            </span>
+          </div>
+          <div className="profile-preview-actions">
+            <button type="button" className="secondary small" onClick={clearSelectedProfile}>
+              Ver todo
+            </button>
+          </div>
         </div>
       )}
       {loading && <p className="muted">Cargando reseñas...</p>}
