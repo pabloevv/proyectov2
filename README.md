@@ -1,6 +1,6 @@
-# Lugo · Red social de reseñas
+# Luggo · Red social de reseñas
 
-Lugo es una aplicación social para compartir reseñas de lugares. Este repositorio contiene la base con React + Vite en el frontend y Supabase como backend-as-a-service (PostgreSQL, autenticación, almacenamiento y funcionalidades en tiempo real).
+Luggo es una aplicación social para compartir reseñas de lugares. Este repositorio contiene la base con React + Vite en el frontend y Supabase como backend-as-a-service (PostgreSQL, autenticación, almacenamiento y funcionalidades en tiempo real).
 
 ## Stack principal
 - [React](https://react.dev/) + [Vite](https://vite.dev/) para un frontend veloz y modular.
