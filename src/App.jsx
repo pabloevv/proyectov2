@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useLocation, useNavigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import NavBar from './navigation/NavBar'
 import HomePage from './navigation/pages/Home'
@@ -9,25 +10,24 @@ import UserPage from './navigation/pages/User'
 import { supabase } from './lib/supabaseClient'
 import { useAuth } from './contexts/AuthContext'
 import luggoLogo from './assets/images/icono LugGO/luggo.svg'
+import OnboardingScreen from './ui/auth/OnboardingScreen'
 
-const pages = {
-  home: HomePage,
-  search: SearchPage,
-  create: CreatePage,
-  map: MapPage,
-  user: UserPage,
+function BrandStamp() {
+  return (
+    <div className="brand-stamp">
+      <div className="brand-icon">
+        <span className="brand-letter brand-letter-l">L</span>
+        <span className="brand-letter brand-letter-g">G</span>
+      </div>
+      <span className="brand-label">LugGO</span>
+    </div>
+  )
 }
 
 function App() {
-  const { user, loading, loginWithGoogle } = useAuth()
-  const [activePage, setActivePage] = useState(() => {
-    const flag = localStorage.getItem('goToUser')
-    if (flag) {
-      localStorage.removeItem('goToUser')
-      return 'user'
-    }
-    return 'home'
-  })
+  const { user, loading, loginWithGoogle, profile } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const testSupabase = async () => {
@@ -41,8 +41,6 @@ function App() {
 
     testSupabase()
   }, [])
-
-  const CurrentPage = pages[activePage] ?? HomePage
 
   if (loading) {
     return (
@@ -59,7 +57,7 @@ function App() {
       <div className="auth-gate">
         <div className="auth-card">
           <img src={luggoLogo} alt="LugGO" className="auth-logo" />
-          <h1>LugGO</h1>
+          <h1>LugGo</h1>
           <p>Inicia sesión con Google para unirte y compartir reseñas.</p>
           <button className="primary" type="button" onClick={loginWithGoogle}>
             Entrar con Google
@@ -69,13 +67,30 @@ function App() {
     )
   }
 
+  const needsOnboarding = Boolean(
+    user && (!profile?.username || !profile?.full_name),
+  )
+
+  if (needsOnboarding) {
+    return <OnboardingScreen />
+  }
+
   return (
     <div className="app-shell">
       <main className="page-area">
-        <CurrentPage />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/create" element={<CreatePage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/user" element={<UserPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
       </main>
 
-        <NavBar activePage={activePage} onNavigate={setActivePage} />
+      <NavBar activePath={location.pathname} onNavigate={navigate} />
+      <BrandStamp />
     </div>
   )
 }

@@ -144,7 +144,7 @@ function CreatePage() {
     setHashtags([...new Set(tags)])
   }, [hashtagsInput])
 
-  // Busca lugares OSM a 75m del punto seleccionado o la ubicación del usuario
+  // Busca lugares OSM a 100m del punto seleccionado o la ubicación del usuario
   useEffect(() => {
     const anchor = selectedPos || userPos
     if (!anchor) return
@@ -156,11 +156,11 @@ function CreatePage() {
         const query = `
           [out:json][timeout:10];
           (
-            node(around:125,${anchor.lat},${anchor.lng})["name"];
-            way(around:125,${anchor.lat},${anchor.lng})["name"];
-            relation(around:125,${anchor.lat},${anchor.lng})["name"];
+            node(around:50,${anchor.lat},${anchor.lng})["name"];
+            way(around:50,${anchor.lat},${anchor.lng})["name"];
+            relation(around:50,${anchor.lat},${anchor.lng})["name"];
           );
-          out center 20;
+          out center 50;
         `
         const resp = await fetch('https://overpass-api.de/api/interpreter', {
           method: 'POST',
@@ -169,15 +169,38 @@ function CreatePage() {
         if (!resp.ok) throw new Error('No se pudo consultar lugares OSM')
         const data = await resp.json()
         const elements = Array.isArray(data?.elements) ? data.elements : []
+
+        const pickLabel = (tags) => {
+          if (!tags) return ''
+          return (
+            tags.name ||
+            tags.amenity ||
+            tags.shop ||
+            tags.tourism ||
+            tags.leisure ||
+            tags.office ||
+            tags.craft ||
+            tags.building ||
+            tags.place ||
+            tags.historic ||
+            ''
+          )
+        }
+
         const mapped = elements
           .map((el) => {
             const lat = el.lat || el.center?.lat
             const lng = el.lon || el.center?.lon
-            if (!lat || !lng || !el.tags?.name) return null
+            const name = pickLabel(el.tags)
+            if (!lat || !lng || !name) return null
             return {
               id: `osm-${el.type}-${el.id}`,
-              name: el.tags.name,
-              address: el.tags['addr:street'] || el.tags['addr:full'] || '',
+              name,
+              address:
+                el.tags?.['addr:street'] ||
+                el.tags?.['addr:full'] ||
+                el.tags?.['addr:housenumber'] ||
+                '',
               latitude: lat,
               longitude: lng,
             }
@@ -203,10 +226,16 @@ function CreatePage() {
       distance: haversine(anchor, { lat: p.latitude, lng: p.longitude }),
     }))
     return withDistance
-      .filter((p) => p.distance <= 0.125) // 125 metros
+        .filter((p) => p.distance <= 0.1) // 100 metros
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 5)
   }, [selectedPos, userPos, places])
+
+  const displayedPlaces = selectedPlace ? [selectedPlace] : nearestPlaces
+
+  const handleResetPlaceSelection = () => {
+    setSelectedPlace(null)
+    setSelectedPlaceId(null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -371,7 +400,7 @@ function CreatePage() {
                 </MapContainer>
               </div>
 
-              <div className="form-column">
+        <div className="form-column">
                 <form className="review-form" onSubmit={handleSubmit}>
                   <div className="field">
                     <label>Lugar cercano</label>
@@ -379,12 +408,21 @@ function CreatePage() {
                       <p className="muted small">Cargando lugares...</p>
                     ) : nearestPlaces.length === 0 ? (
                       <p className="muted small">
-                        Toca el mapa para mostrar lugares cercanos (radio 75 m). No se encontraron
+                        Toca el mapa para mostrar lugares dentro de 100 m. No se encontraron
                         lugares registrados en esa zona.
                       </p>
                     ) : (
                       <div className="places-list">
-                        {nearestPlaces.map((p) => (
+                        {selectedPlace && (
+                          <button
+                            type="button"
+                            className="text-link small"
+                            onClick={handleResetPlaceSelection}
+                          >
+                            Cambiar lugar
+                          </button>
+                        )}
+                        {displayedPlaces.map((p) => (
                           <button
                             type="button"
                             key={p.id}

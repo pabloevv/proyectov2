@@ -6,23 +6,23 @@ import userIcon from '../assets/images/nav/Usuario.svg'
 import './NavBar.css'
 
 const navItems = [
-  { id: 'home', label: 'Inicio', icon: homeIcon },
-  { id: 'search', label: 'Buscar', icon: searchIcon },
-  { id: 'create', label: 'Más', icon: addIcon },
-  { id: 'map', label: 'Mapa', icon: mapIcon },
-  { id: 'user', label: 'Usuario', icon: userIcon },
+  { id: 'home', label: 'Inicio', icon: homeIcon, path: '/' },
+  { id: 'search', label: 'Buscar', icon: searchIcon, path: '/search' },
+  { id: 'create', label: 'Más', icon: addIcon, path: '/create' },
+  { id: 'map', label: 'Mapa', icon: mapIcon, path: '/map' },
+  { id: 'user', label: 'Usuario', icon: userIcon, path: '/user' },
 ]
 
-function NavBar({ activePage, onNavigate }) {
+function NavBar({ activePath, onNavigate }) {
   return (
     <nav className="nav-shell" aria-label="Navegación principal">
       <div className="nav-items">
         {navItems.map((item) => (
           <button
             key={item.id}
-            className={`nav-button ${activePage === item.id ? 'active' : ''}`}
+            className={`nav-button ${activePath === item.path ? 'active' : ''}`}
             type="button"
-            onClick={() => onNavigate(item.id)}
+            onClick={() => onNavigate(item.path)}
           >
             <img src={item.icon} alt="" aria-hidden="true" />
             <span>{item.label}</span>

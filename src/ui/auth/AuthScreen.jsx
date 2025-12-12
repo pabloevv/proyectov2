@@ -292,6 +292,7 @@ const AuthScreen = () => {
       setDeletingReviews(false)
     }
   }
+
   useEffect(() => {
     if (cropScale < cropMinScale) {
       setCropScale(cropMinScale)
@@ -336,6 +337,7 @@ const AuthScreen = () => {
     ((profile?.email || profile?.user_email || '').toLowerCase() === adminEmail && adminEmail) ||
     (profile?.id && adminId && profile.id === adminId)
   const isProfileComplete = Boolean(profile?.username && profile?.full_name)
+
   const placeholderInitial = (
     profile?.full_name ||
     profile?.username?.replace(/^@+/, '') ||
@@ -670,300 +672,319 @@ const AuthScreen = () => {
   return (
     <section className="auth-screen">
       <div className="profile-shell">
-        <div className="profile-summary">
-          <div className="avatar-display">
-            <button className="avatar-button" type="button" onClick={triggerFilePicker}>
-              {previewUrl ? (
-                <img src={previewUrl} alt="Avatar de perfil" />
-              ) : (
-                <span className="avatar-placeholder">{placeholderInitial}</span>
+        <div className="profile-content">
+          <div className="profile-summary">
+            <div className="avatar-display">
+              <button className="avatar-button" type="button" onClick={triggerFilePicker}>
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Avatar de perfil" />
+                ) : (
+                  <span className="avatar-placeholder">{placeholderInitial}</span>
+                )}
+                <span className="avatar-plus" aria-hidden="true">
+                  +
+                </span>
+                <span className="sr-only">Cambiar foto de perfil</span>
+              </button>
+              {rankInfo?.frame && (
+                <img src={rankInfo.frame} alt="" aria-hidden="true" className="rank-frame" />
               )}
-              <span className="avatar-plus" aria-hidden="true">
-                +
+              <input
+                ref={fileInputRef}
+                className="sr-only"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            <div className="profile-info">
+              <div className="profile-top-row">
+                <p className="profile-username">{profile?.username ?? '@configura-tu-user'}</p>
+                <div className="profile-buttons">
+                  <button
+                    className="icon-button"
+                    type="button"
+                    aria-label="Abrir configuración"
+                    onClick={openSettingsPanel}
+                  >
+                    <img src={settingsIcon} alt="" aria-hidden="true" />
+                  </button>
+                  {isAdmin && (
+                    <button
+                      className="danger-outline"
+                      type="button"
+                      onClick={handleCleanup}
+                      disabled={cleaning || wipingReviews}
+                    >
+                      {cleaning ? 'Limpiando...' : 'Limpiar storage'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="profile-stats">
+                <span>
+                  <strong>{reviewCount}</strong> reseñas
+                </span>
+                <span>
+                  <strong>{followerCount}</strong> seguidores
+                </span>
+                <span>
+                  <strong>{followingCount}</strong> seguidos
+                </span>
+              </div>
+              <span className="rank-chip large">
+                {rankInfo?.label || 'Rookie'} · {rankLikesLabel} likes
               </span>
-              <span className="sr-only">Cambiar foto de perfil</span>
-            </button>
-            {rankInfo?.frame && (
-              <img src={rankInfo.frame} alt="" aria-hidden="true" className="rank-frame" />
-            )}
-            <input
-              ref={fileInputRef}
-              className="sr-only"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
+
+              <div className="profile-name-block">
+                <p className="profile-fullname">{profile?.full_name ?? 'Agrega tu nombre'}</p>
+                <p className="profile-handle muted small">{profile?.username ?? '@pendiente'}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="profile-info">
-          <div className="profile-top-row">
-              <p className="profile-username">{profile?.username ?? '@configura-tu-user'}</p>
-              <div className="profile-buttons">
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label="Abrir configuración"
-                  onClick={openSettingsPanel}
-                >
-                  <img src={settingsIcon} alt="" aria-hidden="true" />
+          {isAdmin && cleanupStatus && <p className="muted small admin-status">{cleanupStatus}</p>}
+          {isAdmin && wipeStatus && <p className="muted small admin-status">{wipeStatus}</p>}
+
+          <div className={`settings-panel ${settingsOpen ? 'open' : ''}`}>
+            <div className="panel-header">
+              <div>
+                <p className="muted small">Configuración</p>
+                <h3>Editar perfil</h3>
+              </div>
+              {isProfileComplete && (
+                <button className="text-link" type="button" onClick={closeSettingsPanel}>
+                  Cerrar
                 </button>
-                {isAdmin && (
+              )}
+            </div>
+
+            <form className="profile-form" onSubmit={handleSubmit}>
+              <label htmlFor="username">Usuario (@)</label>
+              <div className="username-input">
+                <span aria-hidden="true">@</span>
+                <input
+                  id="username"
+                  placeholder="ejemplo"
+                  value={formState.username}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, username: event.target.value }))
+                  }
+                />
+              </div>
+
+              <label htmlFor="fullName">Nombre</label>
+              <input
+                id="fullName"
+                type="text"
+                placeholder="Cómo te verán"
+                value={formState.fullName}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, fullName: event.target.value }))
+                }
+              />
+
+              <button className="primary" type="submit" disabled={saving}>
+                {saving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+
+              {status && <p className="status-message">{status}</p>}
+            </form>
+
+            <div className="settings-footer">
+              <button className="text-link logout" onClick={logout} type="button">
+                Cerrar sesión
+              </button>
+
+              {isAdmin && (
+                <div className="admin-actions">
                   <button
-                    className="danger-outline"
+                    className="danger"
                     type="button"
                     onClick={handleCleanup}
                     disabled={cleaning || wipingReviews}
                   >
-                    {cleaning ? 'Limpiando...' : 'Limpiar storage'}
+                    {cleaning ? 'Limpiando...' : 'Limpiar buckets profile y resennas'}
                   </button>
-                )}
+                  <button
+                    className="danger"
+                    type="button"
+                    onClick={handleWipeReviews}
+                    disabled={wipingReviews || cleaning}
+                  >
+                    {wipingReviews ? 'Borrando reseñas...' : 'Borrar reseñas + votos + fotos'}
+                  </button>
+                  {cleanupStatus && <p className="muted small">{cleanupStatus}</p>}
+                  {wipeStatus && <p className="muted small">{wipeStatus}</p>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <section className="user-reviews">
+            <div className="user-reviews-header">
+              <div>
+                <p className="muted small">Actividad</p>
+                <h3>Mis reseñas</h3>
               </div>
-            </div>
-
-            <div className="profile-stats">
-              <span>
-                <strong>{reviewCount}</strong> reseñas
-              </span>
-              <span>
-                <strong>{followerCount}</strong> seguidores
-              </span>
-              <span>
-                <strong>{followingCount}</strong> seguidos
+              <span className="muted small">
+                {userReviews.length} {userReviews.length === 1 ? 'reseña' : 'reseñas'}
               </span>
             </div>
-            <span className="rank-chip large">
-              {rankInfo?.label || 'Rookie'} · {rankLikesLabel} likes
-            </span>
-
-            <div className="profile-name-block">
-              <p className="profile-fullname">{profile?.full_name ?? 'Agrega tu nombre'}</p>
-              <p className="profile-handle muted small">{profile?.username ?? '@pendiente'}</p>
-            </div>
-          </div>
-        </div>
-
-        {isAdmin && cleanupStatus && <p className="muted small admin-status">{cleanupStatus}</p>}
-        {isAdmin && wipeStatus && <p className="muted small admin-status">{wipeStatus}</p>}
-
-        <div className={`settings-panel ${settingsOpen ? 'open' : ''}`}>
-          <div className="panel-header">
-            <div>
-              <p className="muted small">Configuración</p>
-              <h3>Editar perfil</h3>
-            </div>
-            {isProfileComplete && (
-              <button className="text-link" type="button" onClick={closeSettingsPanel}>
-                Cerrar
-              </button>
-            )}
-          </div>
-
-          <form className="profile-form" onSubmit={handleSubmit}>
-            <label htmlFor="username">Usuario (@)</label>
-            <div className="username-input">
-              <span aria-hidden="true">@</span>
-              <input
-                id="username"
-                placeholder="ejemplo"
-                value={formState.username}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, username: event.target.value }))
-                }
-              />
-            </div>
-
-            <label htmlFor="fullName">Nombre</label>
-            <input
-              id="fullName"
-              type="text"
-              placeholder="Cómo te verán"
-              value={formState.fullName}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, fullName: event.target.value }))
-              }
-            />
-
-            <button className="primary" type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-
-            {status && <p className="status-message">{status}</p>}
-          </form>
-
-          <div className="settings-footer">
-            <button className="text-link logout" onClick={logout} type="button">
-              Cerrar sesión
-            </button>
-
-            {isAdmin && (
-              <div className="admin-actions">
+            {selectedReviewIds.size > 0 && (
+              <div className="user-review-toolbar">
+                <p>{selectedReviewIds.size} seleccionada(s)</p>
                 <button
                   className="danger"
                   type="button"
-                  onClick={handleCleanup}
-                  disabled={cleaning || wipingReviews}
+                  onClick={handleDeleteSelected}
+                  disabled={deletingReviews}
                 >
-                  {cleaning ? 'Limpiando...' : 'Limpiar buckets profile y resennas'}
+                  {deletingReviews ? 'Borrando...' : 'Eliminar seleccionadas'}
                 </button>
-                <button
-                  className="danger"
-                  type="button"
-                  onClick={handleWipeReviews}
-                  disabled={wipingReviews || cleaning}
-                >
-                  {wipingReviews ? 'Borrando reseñas...' : 'Borrar reseñas + votos + fotos'}
-                </button>
-                {cleanupStatus && <p className="muted small">{cleanupStatus}</p>}
-                {wipeStatus && <p className="muted small">{wipeStatus}</p>}
               </div>
             )}
-          </div>
-        </div>
-
-        <section className="user-reviews">
-          <div className="user-reviews-header">
-            <div>
-              <p className="muted small">Actividad</p>
-              <h3>Mis reseñas</h3>
-            </div>
-            <span className="muted small">
-              {userReviews.length} {userReviews.length === 1 ? 'reseña' : 'reseñas'}
-            </span>
-          </div>
-          {selectedReviewIds.size > 0 && (
-            <div className="user-review-toolbar">
-              <p>{selectedReviewIds.size} seleccionada(s)</p>
-              <button
-                className="danger"
-                type="button"
-                onClick={handleDeleteSelected}
-                disabled={deletingReviews}
-              >
-                {deletingReviews ? 'Borrando...' : 'Eliminar seleccionadas'}
-              </button>
-            </div>
-          )}
-          {deleteError && <p className="muted error">{deleteError}</p>}
-          {reviewsLoading && <p className="muted">Cargando reseñas...</p>}
-          {reviewsError && <p className="muted error">{reviewsError}</p>}
-          {!reviewsLoading && !reviewsError && userReviews.length === 0 && (
-            <p className="muted">Aún no has publicado reseñas. ¡El mapa te espera!</p>
-          )}
-          {!reviewsLoading && !reviewsError && userReviews.length > 0 && (
-            <div className="user-review-grid">
-              {userReviews.map((review) => {
-                const likeCount =
-                  review.votes?.filter((vote) => vote.type === 'like').length || 0
-                const dislikeCount =
-                  review.votes?.filter((vote) => vote.type === 'dislike').length || 0
-                const commentCount = review.review_comments?.length || 0
-                const isSelected = selectedReviewIds.has(review.id)
-                const reviewImage = review.review_images?.[0]?.image_url || fallbackImage
-                return (
-                  <article key={review.id} className={`review-card user-review-card ${isSelected ? 'selected' : ''}`}>
-                    <div className="review-image">
-                      <img src={reviewImage} alt={review.places?.name || 'Lugar'} />
-                      <div className="review-meta-top">
-                        <div className="author">
-                          <div className="author-avatar">
-                            {previewUrl || profile?.avatar_url ? (
-                              <img
-                                src={previewUrl || profile?.avatar_url}
-                                alt={profile?.username || 'avatar'}
-                              />
-                            ) : (
-                              <span className="avatar-fallback">{placeholderInitial}</span>
-                            )}
-                            {rankInfo?.frame && (
-                              <img src={rankInfo.frame} alt="" aria-hidden="true" className="rank-frame" />
-                            )}
+            {deleteError && <p className="muted error">{deleteError}</p>}
+            {reviewsLoading && <p className="muted">Cargando reseñas...</p>}
+            {reviewsError && <p className="muted error">{reviewsError}</p>}
+            {!reviewsLoading && !reviewsError && userReviews.length === 0 && (
+              <p className="muted">Aún no has publicado reseñas. ¡El mapa te espera!</p>
+            )}
+            {!reviewsLoading && !reviewsError && userReviews.length > 0 && (
+              <div className="user-review-grid">
+                {userReviews.map((review) => {
+                  const likeCount =
+                    review.votes?.filter((vote) => vote.type === 'like').length || 0
+                  const dislikeCount =
+                    review.votes?.filter((vote) => vote.type === 'dislike').length || 0
+                  const commentCount = review.review_comments?.length || 0
+                  const isSelected = selectedReviewIds.has(review.id)
+                  const reviewImage = review.review_images?.[0]?.image_url || fallbackImage
+                  return (
+                    <article
+                      key={review.id}
+                      className={`review-card user-review-card ${
+                        isSelected ? 'selected' : ''
+                      }`}
+                    >
+                      <div className="review-image">
+                        <img src={reviewImage} alt={review.places?.name || 'Lugar'} />
+                        <div className="review-meta-top">
+                          <div className="author">
+                            <div className="author-avatar">
+                              {previewUrl || profile?.avatar_url ? (
+                                <img
+                                  src={previewUrl || profile?.avatar_url}
+                                  alt={profile?.username || 'avatar'}
+                                />
+                              ) : (
+                                <span className="avatar-fallback">{placeholderInitial}</span>
+                              )}
+                              {rankInfo?.frame && (
+                                <img
+                                  src={rankInfo.frame}
+                                  alt=""
+                                  aria-hidden="true"
+                                  className="rank-frame"
+                                />
+                              )}
+                            </div>
+                            <div>
+                              <p className="author-name">
+                                {profile?.full_name || profile?.username || 'Usuario'}
+                              </p>
+                              <p className="author-handle">{profile?.username || ''}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="author-name">{profile?.full_name || profile?.username || 'Usuario'}</p>
-                            <p className="author-handle">{profile?.username || ''}</p>
-                          </div>
+                          <span className="created">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </span>
                         </div>
-                        <span className="created">
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </span>
+                        <label className="review-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleReviewSelection(review.id)}
+                            aria-label="Seleccionar reseña"
+                          />
+                          <span />
+                        </label>
                       </div>
-                      <label className="review-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleReviewSelection(review.id)}
-                          aria-label="Seleccionar reseña"
-                        />
-                        <span />
-                      </label>
-                    </div>
-                    <div className="review-body">
-                      <h3>{review.places?.name || 'Lugar sin nombre'}</h3>
-                      <p className="description">{review.content || 'Sin descripción'}</p>
-                      <Stars value={review.rating || 0} />
-                      <div className="actions">
-                        <div className="action-row">
-                          <button type="button" className="pill like" disabled>
-                            <img src={likeIcon} alt="" aria-hidden="true" />
-                            <span>{likeCount}</span>
-                          </button>
-                          <button type="button" className="pill dislike" disabled>
-                            <img src={dislikeIcon} alt="" aria-hidden="true" />
-                            <span>{dislikeCount}</span>
-                          </button>
-                          <div className="comment-block">
-                            <button type="button" className="pill comment" disabled>
-                              <img src={commentIcon} alt="" aria-hidden="true" />
-                              <span>{commentCount}</span>
+                      <div className="review-body">
+                        <h3>{review.places?.name || 'Lugar sin nombre'}</h3>
+                        <p className="description">{review.content || 'Sin descripción'}</p>
+                        <Stars value={review.rating || 0} />
+                        <div className="actions">
+                          <div className="action-row">
+                            <button type="button" className="pill like" disabled>
+                              <img src={likeIcon} alt="" aria-hidden="true" />
+                              <span>{likeCount}</span>
                             </button>
-                            <input type="text" disabled placeholder="Comentarios visibles abajo" />
+                            <button type="button" className="pill dislike" disabled>
+                              <img src={dislikeIcon} alt="" aria-hidden="true" />
+                              <span>{dislikeCount}</span>
+                            </button>
+                            <div className="comment-block">
+                              <button type="button" className="pill comment" disabled>
+                                <img src={commentIcon} alt="" aria-hidden="true" />
+                                <span>{commentCount}</span>
+                              </button>
+                              <input type="text" disabled placeholder="Comentarios visibles abajo" />
+                            </div>
                           </div>
-                        </div>
-                        {commentCount > 0 && (
-                          <div className="comments-panel static">
-                            {review.review_comments?.map((comment) => (
-                              <div key={comment.id} className="comment-row">
-                                <div className="comment-avatar">
-                                  {comment.profiles?.avatar_url ? (
-                                    <img
-                                      src={comment.profiles.avatar_url}
-                                      alt={comment.profiles.username || 'avatar'}
-                                    />
-                                  ) : (
-                                    <span>
-                                      {(comment.profiles?.username || 'U')
-                                        .replace(/^@+/, '')
-                                        .charAt(0)
-                                        .toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="comment-body">
-                                  <div className="comment-meta">
-                                    <span className="comment-user">
-                                      {comment.profiles?.full_name || comment.profiles?.username || 'Usuario'}
-                                    </span>
-                                    {comment.profiles?.username && (
-                                      <span className="comment-handle">{comment.profiles.username}</span>
+                          {commentCount > 0 && (
+                            <div className="comments-panel static">
+                              {review.review_comments?.map((comment) => (
+                                <div key={comment.id} className="comment-row">
+                                  <div className="comment-avatar">
+                                    {comment.profiles?.avatar_url ? (
+                                      <img
+                                        src={comment.profiles.avatar_url}
+                                        alt={comment.profiles.username || 'avatar'}
+                                      />
+                                    ) : (
+                                      <span>
+                                        {(comment.profiles?.username || 'U')
+                                          .replace(/^@+/, '')
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </span>
                                     )}
-                                    <span className="comment-date">
-                                      {new Date(comment.created_at).toLocaleDateString()}
-                                    </span>
                                   </div>
-                                  <p className="comment-text">{comment.content}</p>
+                                  <div className="comment-body">
+                                    <div className="comment-meta">
+                                      <span className="comment-user">
+                                        {comment.profiles?.full_name ||
+                                          comment.profiles?.username ||
+                                          'Usuario'}
+                                      </span>
+                                      {comment.profiles?.username && (
+                                        <span className="comment-handle">
+                                          {comment.profiles.username}
+                                        </span>
+                                      )}
+                                      <span className="comment-date">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="comment-text">{comment.content}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          )}
-        </section>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
       </div>
       {cropOpen && (
         <div
