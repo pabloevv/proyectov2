@@ -43,7 +43,7 @@ proyectov2/
 ├── .env.example
 └── README.md
 ```
-Cada subcarpeta de `src/assets/images` incluye un `.gitkeep` para conservarla en el repositorio aunque aún no existan archivos. Sustituye los placeholders con tus íconos definitivos conforme avance el diseño.
+Cada subcarpeta de el apartado `src/assets/images` incluye un `.gitkeep` para conservarla en el repositorio aunque aún no existan archivos. Sustituye los placeholders con tus íconos definitivos conforme avance el diseño.
 
 ## Cliente de Supabase
 El archivo `src/lib/supabaseClient.js` crea una instancia única de Supabase usando las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. El módulo lanza una excepción descriptiva si las variables no existen, lo que ayuda a detectar configuraciones incompletas desde el arranque.
